@@ -1,59 +1,75 @@
 package tr.edu.iyte.vrxd.unityhook;
 
 import android.content.Context;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import dalvik.system.DexClassLoader;
 import tr.edu.iyte.vrxd.api.IPlugin;
 
 public class FrameDistributer {
     private static final String LOGTAG = FrameDistributer.class.getSimpleName();
-    private static List<IPlugin> plugins = new ArrayList<>();
-    private static Map<IPlugin, List<URL>> resources = new HashMap<>();
+    private static final List<IPlugin> PLUGINS = new ArrayList<>();
+    private static final Map<IPlugin, File> RESOURCES = new HashMap<>();
+    //private static final Set<Uri> RESOURCE_CACHE = new HashSet<>();
 
     @SuppressWarnings("unchecked")
-    public static boolean loadPlugins() {
-        final File pluginsPath = new File(Environment.getExternalStorageDirectory().getPath()
-                + File.separator + "VRXD");
-        if(!pluginsPath.exists())
-            if(!pluginsPath.mkdirs())
-                throw new RuntimeException("could not generate plugin paths");
+    public static void loadPlugins(Context context) {
+        final File pluginsPath = new File(Environment.getExternalStorageDirectory(), "VRXD");
+        tryCreateFolder(pluginsPath);
 
         final File[] pluginFiles = getPlugins(pluginsPath);
-        for(File pluginFile: pluginFiles) {
-            final String dexPath = pluginFile + File.separator + "dex";
-            final DexClassLoader loader = new DexClassLoader(pluginFile.getPath(), dexPath,
-                    null, IPlugin.class.getClassLoader());
+        final File pluginsCache = new File(context.getFilesDir(), "pluginsCache");
+        tryCreateFolder(pluginsCache);
+
+        for(File pluginFile : pluginFiles) {
+            final File dexFolder = new File(context.getCodeCacheDir(), pluginFile.getName());
+            tryCreateFolder(dexFolder);
+
             try {
-                loader.getResources("");
-                // TODO figure out these resources shit and objectCll"ass cast to IPLugin
-                final Class<IPlugin> objectClass = (Class<IPlugin>) loader.loadClass(pluginFile.getName()+ ".Main");
-            } catch(ClassNotFoundException e) {
-                Log.e(LOGTAG, "CLASSNOTFOUND: " + pluginFile);
-                return false;
-            } catch(IOException e) {
-                final String msg = "IOEXCEPTION while loading class: " + pluginFile;
-                Log.e(LOGTAG, msg);
-                return false;
-                //throw new RuntimeException(msg);
-            }
+                final String asd = pluginsCache.getPath() + File.separator + pluginFile.getName();
+                final File resFolder = extractFolder(pluginFile.getPath(), asd);
+                final DexClassLoader loader = new DexClassLoader(pluginFile.getPath(), dexFolder.getPath(),
+                        asd + File.separator + "lib" + File.separator + Build.SUPPORTED_32_BIT_ABIS[0],
+                        IPlugin.class.getClassLoader());
+                final Class<IPlugin> objectClass =
+                        (Class<IPlugin>) loader.loadClass(
+                                pluginFile.getName().replace(".apk", ".Main"));
+                IPlugin plugin = objectClass.newInstance();
+                RESOURCES.put(plugin, new File(resFolder, "res"));
+                Log.i(LOGTAG, Arrays.toString(resFolder.list()));
+
+                PLUGINS.add(plugin);
+            } catch(Exception ignored) {}   // ignore the plugin
         }
 
-        for(IPlugin plugin : plugins) {
-            Log.i("FRAMEDIST", "plugin: " + plugin.className());
+        for(IPlugin plugin : PLUGINS) {
+            Log.i(LOGTAG, "plugin loaded: " + plugin.className());
+            plugin.onStart(context);
         }
+    }
 
-        return true;
+    private static void tryCreateFolder(File folder) {
+        if(!folder.exists() && !folder.mkdirs())
+            throw new RuntimeException(folder + " mkdir failed");
     }
 
     private static File[] getPlugins(File path) {
@@ -65,14 +81,56 @@ public class FrameDistributer {
         });
     }
 
-    public static void distribute(Context context, byte[] frame) {
-        /*final String libPath = "/sdcard/plugin/plugin.apk";
-        final String dexPath = context.getDir("dex", 0).getPath() + "/plugin";
-        final DexClassLoader loader = new DexClassLoader(libPath, dexPath, null, context.getClass().getClassLoader());
-        try {
-            final Class<Object> objectClass = (Class<Object>) loader.loadClass("");
-        } catch(ClassNotFoundException e) {
-            e.printStackTrace();
-        }*/
+    public static void distribute(byte[] frame) {
+        for(IPlugin plugin : PLUGINS) {
+            Log.i(LOGTAG, "frame received for " + plugin.getClass().toString());
+            plugin.onFrame(frame);
+        }
+    }
+
+    private static File extractFolder(String zipFile, String newPath) {
+        final File extractFolder = new File(newPath);
+        if(extractFolder.exists())
+            return extractFolder;
+
+        final File file = new File(zipFile);
+        final int bufferSize = 2048;
+        tryCreateFolder(extractFolder);
+        try(ZipFile zip = new ZipFile(file)) {
+            Enumeration zipFileEntries = zip.entries();
+
+            while(zipFileEntries.hasMoreElements()) {
+                ZipEntry entry = (ZipEntry) zipFileEntries.nextElement();
+                Log.i(LOGTAG, entry.getName());
+                if(entry.isDirectory())
+                    continue;
+                //if(!entry.getName().startsWith("res/"))
+                //    continue;
+                File destFile = new File(newPath, entry.getName());
+                tryCreateFolder(destFile.getParentFile());
+
+                try(BufferedInputStream is = new BufferedInputStream(zip
+                        .getInputStream(entry))) {
+                    int currentByte;
+                    // establish buffer for writing file
+                    byte data[] = new byte[bufferSize];
+
+                    // write the current file to disk
+                    try(BufferedOutputStream dest = new BufferedOutputStream(
+                            new FileOutputStream(destFile),
+                            bufferSize)) {
+
+                        // read and write until last byte is encountered
+                        while((currentByte = is.read(data, 0, bufferSize)) != -1) {
+                            dest.write(data, 0, currentByte);
+                        }
+                        dest.flush();
+                    }
+                }//[arm64-v8a, armeabi-v7a, armeabi]
+            }
+        } catch(Exception e) {
+            Log.i(LOGTAG, "ERROR: " + e.getMessage());
+        }
+        return extractFolder;
     }
 }
