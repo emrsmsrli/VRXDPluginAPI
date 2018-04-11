@@ -28,7 +28,7 @@ import tr.edu.iyte.vrxd.api.IPlugin;
 public class FrameDistributer {
     private static final String LOGTAG = FrameDistributer.class.getSimpleName();
     private static final List<IPlugin> PLUGINS = new ArrayList<>();
-    private static final Map<IPlugin, File> RESOURCES = new HashMap<>();
+    //private static final Map<IPlugin, File> RESOURCES = new HashMap<>();
     //private static final Set<Uri> RESOURCE_CACHE = new HashSet<>();
 
     @SuppressWarnings("unchecked")
@@ -54,7 +54,7 @@ public class FrameDistributer {
                         (Class<IPlugin>) loader.loadClass(
                                 pluginFile.getName().replace(".apk", ".Main"));
                 IPlugin plugin = objectClass.newInstance();
-                RESOURCES.put(plugin, new File(resFolder, "res"));
+                //RESOURCES.put(plugin, new File(resFolder, "res"));
                 Log.i(LOGTAG, Arrays.toString(resFolder.list()));
 
                 PLUGINS.add(plugin);
