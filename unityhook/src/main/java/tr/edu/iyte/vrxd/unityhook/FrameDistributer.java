@@ -6,6 +6,8 @@ import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
+import org.opencv.core.Mat;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -37,28 +39,32 @@ public class FrameDistributer {
         tryCreateFolder(pluginsPath);
 
         final File[] pluginFiles = getPlugins(pluginsPath);
-        final File pluginsCache = new File(context.getFilesDir(), "pluginsCache");
+        final File pluginsCache = new File(context.getFilesDir(), ".plugin_cache");
         tryCreateFolder(pluginsCache);
 
         for(File pluginFile : pluginFiles) {
+            Log.i(LOGTAG, "trying to load " + pluginFile.getName());
             final File dexFolder = new File(context.getCodeCacheDir(), pluginFile.getName());
             tryCreateFolder(dexFolder);
 
             try {
                 final String asd = pluginsCache.getPath() + File.separator + pluginFile.getName();
                 final File resFolder = extractFolder(pluginFile.getPath(), asd);
+                final String libPath = asd + File.separator + "lib" + File.separator + "armeabi-v7a";
+                Log.d(LOGTAG, "searching for lib in " + libPath);
                 final DexClassLoader loader = new DexClassLoader(pluginFile.getPath(), dexFolder.getPath(),
-                        asd + File.separator + "lib" + File.separator + Build.SUPPORTED_32_BIT_ABIS[0],
+                        libPath,//Build.SUPPORTED_32_BIT_ABIS[0],
                         IPlugin.class.getClassLoader());
                 final Class<IPlugin> objectClass =
                         (Class<IPlugin>) loader.loadClass(
                                 pluginFile.getName().replace(".apk", ".Main"));
                 IPlugin plugin = objectClass.newInstance();
                 //RESOURCES.put(plugin, new File(resFolder, "res"));
-                Log.i(LOGTAG, Arrays.toString(resFolder.list()));
+                //Log.i(LOGTAG, Arrays.toString(resFolder.list()));
 
                 PLUGINS.add(plugin);
-            } catch(Exception ignored) {}   // ignore the plugin
+            } catch(Exception ignored) {
+            }   // ignore the plugin
         }
 
         for(IPlugin plugin : PLUGINS) {
@@ -81,9 +87,16 @@ public class FrameDistributer {
         });
     }
 
-    public static void distribute(byte[] frame) {
+    public static void distribute(int w, int h, byte[] frame) {
         for(IPlugin plugin : PLUGINS) {
-            Log.i(LOGTAG, "frame received for " + plugin.getClass().toString());
+            Log.i(LOGTAG, "frame data received for " + plugin.getClass().toString());
+            plugin.onFrame(w, h, frame);
+        }
+    }
+
+    public static void distribute(Mat frame) {
+        for(IPlugin plugin : PLUGINS) {
+            Log.i(LOGTAG, "frame mat received for " + plugin.getClass().toString());
             plugin.onFrame(frame);
         }
     }
@@ -132,5 +145,9 @@ public class FrameDistributer {
             Log.i(LOGTAG, "ERROR: " + e.getMessage());
         }
         return extractFolder;
+    }
+
+    static {
+        System.loadLibrary("opencv_java4");
     }
 }
