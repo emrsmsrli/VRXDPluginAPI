@@ -9,15 +9,26 @@ sealed class Shape(var x: Int, var y: Int, rotation: Double, var fill: Long) {
                 throw IllegalArgumentException("rotation must be between [0-360)")
             field = value
         }
+    abstract val type: String
 }
 
 class Circle(x: Int, y: Int, var radius: Double, fill: Long) :
-        Shape(x, y, 0.0, fill)
+        Shape(x, y, 0.0, fill) {
+    override val type = "circle"
+}
 class Rectangle(x: Int, y: Int, var width: Int, var height: Int, rotation: Double, fill: Long) :
-        Shape(x, y, rotation, fill)
+        Shape(x, y, rotation, fill) {
+    override val type = "rectangle"
+}
 class EquiTriangle(x: Int, y: Int, var radius: Double, rotation: Double, fill: Long) :
-        Shape(x, y, rotation, fill)
+        Shape(x, y, rotation, fill) {
+    override val type = "equitriangle"
+}
 class Sprite(x: Int, y: Int, var width: Int, var height: Int, rotation: Double, var filePath: String) :
-        Shape(x, y, rotation, 0L)
+        Shape(x, y, rotation, 0L) {
+    override val type = "sprite"
+}
 class Text(x: Int, y: Int, var size: Int, rotation: Double, var text: String, color: Long) :
-        Shape(x, y, rotation, color)
+        Shape(x, y, rotation, color) {
+    override val type = "text"
+}
