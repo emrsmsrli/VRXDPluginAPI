@@ -1,8 +1,6 @@
 package tr.edu.iyte.vrxd.unityhook;
 
 import android.content.Context;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
@@ -14,18 +12,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import dalvik.system.DexClassLoader;
 import tr.edu.iyte.vrxd.api.IPlugin;
+import tr.edu.iyte.vrxd.api.data.Circle;
 
 public class FrameDistributer {
     private static final String LOGTAG = FrameDistributer.class.getSimpleName();
@@ -34,7 +28,7 @@ public class FrameDistributer {
     //private static final Set<Uri> RESOURCE_CACHE = new HashSet<>();
 
     @SuppressWarnings("unchecked")
-    public static void loadPlugins(Context context) {
+    public static boolean loadPlugins(Context context) {
         final File pluginsPath = new File(Environment.getExternalStorageDirectory(), "VRXD");
         tryCreateFolder(pluginsPath);
 
@@ -42,6 +36,7 @@ public class FrameDistributer {
         final File pluginsCache = new File(context.getFilesDir(), ".plugin_cache");
         tryCreateFolder(pluginsCache);
 
+        boolean isAnyOpenCv = false;
         for(File pluginFile : pluginFiles) {
             Log.i(LOGTAG, "trying to load " + pluginFile.getName());
             final File dexFolder = new File(context.getCodeCacheDir(), pluginFile.getName());
@@ -62,6 +57,8 @@ public class FrameDistributer {
                 //RESOURCES.put(plugin, new File(resFolder, "res"));
                 //Log.i(LOGTAG, Arrays.toString(resFolder.list()));
 
+                isAnyOpenCv |= plugin.isOpenCvExclusive();
+
                 PLUGINS.add(plugin);
             } catch(Exception ignored) {
             }   // ignore the plugin
@@ -71,6 +68,8 @@ public class FrameDistributer {
             Log.i(LOGTAG, "plugin loaded: " + plugin.className());
             plugin.onStart(context);
         }
+
+        return isAnyOpenCv;
     }
 
     private static void tryCreateFolder(File folder) {
@@ -87,17 +86,17 @@ public class FrameDistributer {
         });
     }
 
-    public static void distribute(int w, int h, byte[] frame) {
+    public static void distribute(int frameId, int w, int h, byte[] frame) {
         for(IPlugin plugin : PLUGINS) {
             Log.i(LOGTAG, "frame data received for " + plugin.getClass().toString());
-            plugin.onFrame(w, h, frame);
+            plugin.onFrame(frameId, w, h, frame);
         }
     }
 
-    public static void distribute(Mat frame) {
+    public static void distribute(int frameId, Mat frame) {
         for(IPlugin plugin : PLUGINS) {
             Log.i(LOGTAG, "frame mat received for " + plugin.getClass().toString());
-            plugin.onFrame(frame);
+            plugin.onFrame(frameId, frame);
         }
     }
 
