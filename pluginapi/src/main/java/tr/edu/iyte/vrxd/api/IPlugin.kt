@@ -20,12 +20,7 @@ interface IPlugin {
     fun onFrame(frameId: Int, mat: Mat)
     fun onFrame(frameId: Int, width: Int, height: Int, bytes: ByteArray)
 
-    /**
-     * -1 means frame not ready.
-     * otherwise might return between 0-4
-     */
-    fun getFrameObjCount(frameId: Int): Int
-    fun getFrameObj(frameId: Int, objIdx: Int): Shape
+    fun getFrameShapes(frameId: Int): String
 
     fun getResources(): List<String>
 }
