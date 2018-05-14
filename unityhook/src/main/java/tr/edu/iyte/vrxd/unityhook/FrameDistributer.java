@@ -19,7 +19,6 @@ import java.util.zip.ZipFile;
 
 import dalvik.system.DexClassLoader;
 import tr.edu.iyte.vrxd.api.IPlugin;
-import tr.edu.iyte.vrxd.api.data.Circle;
 
 public class FrameDistributer {
     private static final String LOGTAG = FrameDistributer.class.getSimpleName();
@@ -98,6 +97,14 @@ public class FrameDistributer {
             Log.i(LOGTAG, "frame mat received for " + plugin.getClass().toString());
             plugin.onFrame(frameId, frame);
         }
+    }
+
+    public static String getFrameShapes(int frameId) {
+        StringBuilder b = new StringBuilder(128);
+        for(IPlugin plugin : PLUGINS) {
+            b.append(plugin.getFrameShapes(frameId)).append(":");
+        }
+        return b.substring(0, b.length() - 1);
     }
 
     private static File extractFolder(String zipFile, String newPath) {
