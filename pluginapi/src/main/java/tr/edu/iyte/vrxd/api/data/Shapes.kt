@@ -19,6 +19,10 @@ class Circle(x: Int, y: Int, var radius: Double, fill: Long) :
 class Rectangle(x: Int, y: Int, var width: Int, var height: Int, rotation: Double, fill: Long) :
         Shape(x, y, rotation, fill) {
     override val type = "rectangle"
+
+    override fun toString(): String {
+        return "$x,$y,$width,$height"
+    }
 }
 class EquiTriangle(x: Int, y: Int, var radius: Double, rotation: Double, fill: Long) :
         Shape(x, y, rotation, fill) {
