@@ -103,7 +103,10 @@ public class FrameDistributer {
     public static String getFrameShapes(int frameId) {
         StringBuilder b = new StringBuilder(128);
         for(IPlugin plugin : PLUGINS) {
-            for(Shape shape : plugin.getFrameShapes(frameId))
+            List<Shape> shapes = plugin.getFrameShapes(frameId);
+            if(shapes.isEmpty())
+                continue;
+            for(Shape shape : shapes)
                 b.append(shape.toString()).append(":");
             b.deleteCharAt(b.length() - 1).append(";");
         }
