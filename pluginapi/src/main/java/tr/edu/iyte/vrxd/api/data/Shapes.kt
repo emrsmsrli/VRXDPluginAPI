@@ -15,24 +15,40 @@ sealed class Shape(var x: Int, var y: Int, rotation: Double, var fill: Long) {
 class Circle(x: Int, y: Int, var radius: Double, fill: Long) :
         Shape(x, y, 0.0, fill) {
     override val type = "circle"
+
+    override fun toString(): String {
+        return "$type,$x,$y,$radius"
+    }
 }
 class Rectangle(x: Int, y: Int, var width: Int, var height: Int, rotation: Double, fill: Long) :
         Shape(x, y, rotation, fill) {
     override val type = "rectangle"
 
     override fun toString(): String {
-        return "$x,$y,$width,$height"
+        return "$type,$x,$y,$width,$height"
     }
 }
 class EquiTriangle(x: Int, y: Int, var radius: Double, rotation: Double, fill: Long) :
         Shape(x, y, rotation, fill) {
     override val type = "equitriangle"
+
+    override fun toString(): String {
+        return "$type,$x,$y,$radius"
+    }
 }
 class Sprite(x: Int, y: Int, var width: Int, var height: Int, rotation: Double, var filePath: String) :
         Shape(x, y, rotation, 0L) {
     override val type = "sprite"
+
+    override fun toString(): String {
+        return "$type,$x,$y,$width,$height,$filePath"
+    }
 }
 class Text(x: Int, y: Int, var size: Int, rotation: Double, var text: String, color: Long) :
         Shape(x, y, rotation, color) {
     override val type = "text"
+
+    override fun toString(): String {
+        return "$type,$x,$y,$text"
+    }
 }

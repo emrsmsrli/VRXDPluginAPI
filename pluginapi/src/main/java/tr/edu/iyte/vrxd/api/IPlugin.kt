@@ -20,7 +20,7 @@ interface IPlugin {
     fun onFrame(frameId: Int, mat: Mat)
     fun onFrame(frameId: Int, width: Int, height: Int, bytes: ByteArray)
 
-    fun getFrameShapes(frameId: Int): String
+    fun getFrameShapes(frameId: Int): List<Shape>
 
     fun getResources(): List<String>
 }

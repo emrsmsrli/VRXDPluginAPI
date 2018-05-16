@@ -19,6 +19,7 @@ import java.util.zip.ZipFile;
 
 import dalvik.system.DexClassLoader;
 import tr.edu.iyte.vrxd.api.IPlugin;
+import tr.edu.iyte.vrxd.api.data.Shape;
 
 public class FrameDistributer {
     private static final String LOGTAG = FrameDistributer.class.getSimpleName();
@@ -102,7 +103,9 @@ public class FrameDistributer {
     public static String getFrameShapes(int frameId) {
         StringBuilder b = new StringBuilder(128);
         for(IPlugin plugin : PLUGINS) {
-            b.append(plugin.getFrameShapes(frameId)).append(":");
+            for(Shape shape : plugin.getFrameShapes(frameId))
+                b.append(shape.toString()).append(":");
+            b.deleteCharAt(b.length() - 1).append(";");
         }
         return b.substring(0, b.length() - 1);
     }
