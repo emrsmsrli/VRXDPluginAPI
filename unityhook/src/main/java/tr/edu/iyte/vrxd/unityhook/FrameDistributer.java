@@ -110,7 +110,9 @@ public class FrameDistributer {
                 b.append(shape.toString()).append(":");
             b.deleteCharAt(b.length() - 1).append(";");
         }
-        return b.substring(0, b.length() - 1);
+        if(b.length() == 0)
+            return b.toString();
+        return b.deleteCharAt(b.length() - 1).toString();
     }
 
     private static File extractFolder(String zipFile, String newPath) {
