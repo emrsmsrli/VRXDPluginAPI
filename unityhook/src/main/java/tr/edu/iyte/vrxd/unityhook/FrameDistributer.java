@@ -43,12 +43,10 @@ public class FrameDistributer {
             tryCreateFolder(dexFolder);
 
             try {
-                final String asd = pluginsCache.getPath() + File.separator + pluginFile.getName();
-                final File resFolder = extractFolder(pluginFile.getPath(), asd);
-                final String libPath = asd + File.separator + "lib" + File.separator + "armeabi-v7a";
-                Log.d(LOGTAG, "searching for lib in " + libPath);
+                final File pluginCache = new File(pluginsCache, pluginFile.getName());
+                final File resFolder = extractFolder(pluginFile, pluginCache);
                 final DexClassLoader loader = new DexClassLoader(pluginFile.getPath(), dexFolder.getPath(),
-                        libPath,//Build.SUPPORTED_32_BIT_ABIS[0],
+                        pluginCache.getPath() + File.separator + "lib" + File.separator + "armeabi-v7a",
                         IPlugin.class.getClassLoader());
                 final Class<IPlugin> objectClass =
                         (Class<IPlugin>) loader.loadClass(
@@ -115,15 +113,13 @@ public class FrameDistributer {
         return b.deleteCharAt(b.length() - 1).toString();
     }
 
-    private static File extractFolder(String zipFile, String newPath) {
-        final File extractFolder = new File(newPath);
+    private static File extractFolder(File zipFile, File extractFolder) {
         if(extractFolder.exists())
             return extractFolder;
 
-        final File file = new File(zipFile);
         final int bufferSize = 2048;
         tryCreateFolder(extractFolder);
-        try(ZipFile zip = new ZipFile(file)) {
+        try(ZipFile zip = new ZipFile(zipFile)) {
             Enumeration zipFileEntries = zip.entries();
 
             while(zipFileEntries.hasMoreElements()) {
@@ -133,7 +129,7 @@ public class FrameDistributer {
                     continue;
                 //if(!entry.getName().startsWith("res/"))
                 //    continue;
-                File destFile = new File(newPath, entry.getName());
+                File destFile = new File(extractFolder, entry.getName());
                 tryCreateFolder(destFile.getParentFile());
 
                 try(BufferedInputStream is = new BufferedInputStream(zip
@@ -153,7 +149,7 @@ public class FrameDistributer {
                         }
                         dest.flush();
                     }
-                }//[arm64-v8a, armeabi-v7a, armeabi]
+                }
             }
         } catch(Exception e) {
             Log.i(LOGTAG, "ERROR: " + e.getMessage());
