@@ -9,18 +9,10 @@ interface IPlugin {
     fun isOpenCvExclusive(): Boolean
 
     fun onStart(ctx: Context)
-    fun onResume(ctx: Context)
-    fun onPause(ctx: Context)
-    fun onStop(ctx: Context)
-
-    /*fun onConfigurationRequested()
-    fun onConfigure(configs: Con)*/
 
     // opencv overload
     fun onFrame(frameId: Int, mat: Mat)
     fun onFrame(frameId: Int, width: Int, height: Int, bytes: ByteArray)
 
     fun getFrameShapes(frameId: Int): List<Shape>
-
-    fun getResources(): List<String>
 }

@@ -21,11 +21,10 @@ import dalvik.system.DexClassLoader;
 import tr.edu.iyte.vrxd.api.IPlugin;
 import tr.edu.iyte.vrxd.api.data.Shape;
 
+@SuppressWarnings("unused")
 public class FrameDistributer {
     private static final String LOGTAG = FrameDistributer.class.getSimpleName();
     private static final List<IPlugin> PLUGINS = new ArrayList<>();
-    //private static final Map<IPlugin, File> RESOURCES = new HashMap<>();
-    //private static final Set<Uri> RESOURCE_CACHE = new HashSet<>();
 
     @SuppressWarnings("unchecked")
     public static boolean loadPlugins(Context context) {
@@ -44,7 +43,7 @@ public class FrameDistributer {
 
             try {
                 final File pluginCache = new File(pluginsCache, pluginFile.getName());
-                final File resFolder = extractFolder(pluginFile, pluginCache);
+                extractFolder(pluginFile, pluginCache);
                 final DexClassLoader loader = new DexClassLoader(pluginFile.getPath(), dexFolder.getPath(),
                         pluginCache.getPath() + File.separator + "lib" + File.separator + "armeabi-v7a",
                         IPlugin.class.getClassLoader());
@@ -52,14 +51,12 @@ public class FrameDistributer {
                         (Class<IPlugin>) loader.loadClass(
                                 pluginFile.getName().replace(".apk", ".Main"));
                 IPlugin plugin = objectClass.newInstance();
-                //RESOURCES.put(plugin, new File(resFolder, "res"));
-                //Log.i(LOGTAG, Arrays.toString(resFolder.list()));
 
                 isAnyOpenCv |= plugin.isOpenCvExclusive();
 
                 PLUGINS.add(plugin);
             } catch(Exception ignored) {
-            }   // ignore the plugin
+            }   // ignore defected plugin
         }
 
         for(IPlugin plugin : PLUGINS) {
@@ -113,9 +110,9 @@ public class FrameDistributer {
         return b.deleteCharAt(b.length() - 1).toString();
     }
 
-    private static File extractFolder(File zipFile, File extractFolder) {
+    private static void extractFolder(File zipFile, File extractFolder) {
         if(extractFolder.exists())
-            return extractFolder;
+            return;
 
         final int bufferSize = 2048;
         tryCreateFolder(extractFolder);
@@ -154,7 +151,6 @@ public class FrameDistributer {
         } catch(Exception e) {
             Log.i(LOGTAG, "ERROR: " + e.getMessage());
         }
-        return extractFolder;
     }
 
     static {
