@@ -110,6 +110,10 @@ public class FrameDistributer {
         return b.deleteCharAt(b.length() - 1).toString();
     }
 
+    public static void log(String msg) {
+        Log.d("UnityFrameDistributer", msg);
+    }
+
     private static void extractFolder(File zipFile, File extractFolder) {
         if(extractFolder.exists())
             return;
